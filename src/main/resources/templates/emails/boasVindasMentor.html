@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Bem-vindo ao SAM!</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 1px solid #eeeeee; padding-bottom: 20px; margin-bottom: 20px; }
+        .header h1 { color: #333333; margin: 0; }
+        .content { color: #555555; line-height: 1.6; }
+        .highlight { font-weight: bold; color: #0056b3; }
+        .footer { margin-top: 30px; font-size: 0.9em; color: #777777; }
+        .support-link { color: #0056b3; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Seja bem-vindo(a) ao SAM!</h1>
+    </div>
+    <div class="content">
+        <p>Olá, <span th:text="${nomeMentor}">Nome do Mentor</span>,</p>
+
+        <p>Seja muito bem-vindo(a) ao <span class="highlight">SAM - Sistema de Acompanhamento de Mentorias</span> da Faculdade Descomplica UniAmérica!</p>
+        <p>Ficamos muito felizes que você quis fazer parte desse trabalho maravilhoso.</p>
+        <p>Porém, por política e normas institucionais, o seu cadastro está <span class="highlight">em análise</span> pela coordenação do curso. O seu perfil será analisado no prazo máximo de <strong>5 dias úteis</strong>. Qualquer atualização, você será avisado(a) por aqui.</p>
+        <p>Qualquer dúvida, pode entrar em contato com a equipe de suporte através do e-mail: <a href="mailto:suporte.ao.mentor@sam.com.br" class="support-link">suporte.ao.mentor@sam.com.br</a>.</p>
+    </div>
+    <div class="footer">
+        <p>Atenciosamente,</p>
+        <p><strong>Equipe de Relacionamento com o Mentor</strong><br>
+            SAM - Sistema de Acompanhamento de Mentorias</p>
+    </div>
+</div>
+</body>
+</html>

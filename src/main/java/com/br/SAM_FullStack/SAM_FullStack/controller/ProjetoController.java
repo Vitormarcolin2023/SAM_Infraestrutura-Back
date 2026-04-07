@@ -126,4 +126,16 @@ public class ProjetoController {
         return ResponseEntity.notFound().build();
     }
 
+    @PutMapping("/aceitar-mentoria/{id}")
+    public ResponseEntity<Projeto> aceitarMentoria(@PathVariable Long id) {
+        return ResponseEntity.ok(projetoService.aceitarMentoria(id));
+    }
+
+    @PutMapping("/recusar-mentoria/{id}")
+    public ResponseEntity<Projeto> recusarMentoria(
+            @PathVariable Long id,
+            @RequestBody com.br.SAM_FullStack.SAM_FullStack.dto.RecusaProjetoDTO dto) {
+        return ResponseEntity.ok(projetoService.recusarMentoria(id, dto.justificativa()));
+    }
+
 }

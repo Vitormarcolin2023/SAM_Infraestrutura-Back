@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 1px solid #eeeeee; padding-bottom: 20px; margin-bottom: 20px; }
+        .header h1 { color: #333333; margin: 0; }
+        .content { color: #555555; line-height: 1.6; }
+        .highlight { font-weight: bold; color: #0056b3; }
+        .footer { margin-top: 30px; font-size: 0.9em; color: #777777; }
+        .support-link { color: #0056b3; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>Nova Solicitação de Mentoria</h2>
+    </div>
+    <div class="content">
+        <p>Olá, <span class="highlight" th:text="${nomeMentor}">Mentor</span>,</p>
+        <p>Você recebeu uma nova solicitação para mentorar um projeto na plataforma SAM.</p>
+
+        <p><strong>Projeto:</strong> <span th:text="${nomeProjeto}">Nome do Projeto</span></p>
+        <p><strong>Período:</strong> <span th:text="${periodo}">6º Período</span></p>
+        <p><strong>Área:</strong> <span th:text="${area}">Tecnologia</span></p>
+
+        <p>Por favor, acesse a plataforma para visualizar os detalhes e decidir sobre o aceite da mentoria.</p>
+
+        <a href="http://localhost:4200/login" class="btn">Acessar Plataforma</a>
+    </div>
+    <div class="footer">
+        <p>Este é um e-mail automático enviado pelo SAM - Sistema de Acompanhamento de Mentorias.</p>
+    </div>
+</div>
+</body>
+</html>

@@ -59,11 +59,14 @@ public class Projeto {
     private Mentor mentor;
 
     @Enumerated(EnumType.STRING)
-    private StatusProjeto statusProjeto;
+    private StatusProjeto statusProjeto = StatusProjeto.EM_APROVACAO;
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JsonIgnoreProperties("projetos")
     private Grupo grupo;
+
+    @Column(name = "justificativa_recusa")
+    private String justificativaRecusa;
 
     @ManyToMany
     @JoinTable(

@@ -10,7 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ProjetoService {
@@ -19,6 +21,9 @@ public class ProjetoService {
 
     @Autowired
     private MentorRepository mentorRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     public ProjetoService(ProjetoRepository projetoRepository, GrupoRepository grupoRepository) {
         this.projetoRepository = projetoRepository;
@@ -69,6 +74,7 @@ public class ProjetoService {
             Grupo grupoGerenciado = grupoRepository.findByIdWithAlunos(projeto.getGrupo().getId())
                     .orElse(projeto.getGrupo());
             projeto.setGrupo(grupoGerenciado);
+
             if (grupoGerenciado.getAlunos() != null) {
                 for (Aluno aluno : grupoGerenciado.getAlunos()) {
                     if (aluno.getCurso() != null
@@ -81,12 +87,44 @@ public class ProjetoService {
                         );
                     }
                 }
-
             }
         }
-        atualizarStatusProjeto(projeto);
+
+        // Força o status inicial para aprovação do mentor
+        projeto.setStatusProjeto(StatusProjeto.EM_APROVACAO);
         projeto.setAvaliadoPorMentor(false);
-        return projetoRepository.save(projeto);
+
+        // Salva o projeto primeiro
+        Projeto projetoSalvo = projetoRepository.save(projeto);
+
+        // Lógica de envio de e-mail seguindo seu padrão do MentorService
+        if (projetoSalvo.getMentor() != null && projetoSalvo.getMentor().getId() != null) {
+            try {
+                // Busca o mentor completo para obter e-mail e nome
+                Mentor mentorCompleto = mentorRepository.findById(projetoSalvo.getMentor().getId())
+                        .orElseThrow(() -> new RuntimeException("Mentor não encontrado"));
+
+                String destinatario = mentorCompleto.getEmail();
+                String assunto = "SAM: Nova Solicitação de Mentoria - " + projetoSalvo.getNomeDoProjeto();
+
+                Map<String, Object> variaveis = Map.of(
+                        "nomeMentor", mentorCompleto.getNome(),
+                        "nomeProjeto", projetoSalvo.getNomeDoProjeto(),
+                        "periodo", projetoSalvo.getPeriodo(),
+                        "area", projetoSalvo.getAreaDeAtuacao().getNome()
+                );
+
+                String template = "emails/solicitacao-mentoria"; // Caminho conforme sua estrutura
+
+                emailService.enviarEmailComTemplate(destinatario, assunto, template, variaveis);
+
+            } catch (Exception e) {
+                System.err.println("Erro ao enviar e-mail de solicitação de mentoria: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        return projetoSalvo;
     }
 
 
@@ -157,4 +195,19 @@ public class ProjetoService {
         return projetoRepository.findByGrupoId(idGrupo).orElse(null);
     }
 
+    public Projeto aceitarMentoria(Long id) {
+        Projeto projeto = findById(id);
+        // Transição para ATIVO
+        projeto.setStatusProjeto(StatusProjeto.ATIVO);
+        projeto.setJustificativaRecusa(null);
+        return projetoRepository.save(projeto);
+    }
+
+    public Projeto recusarMentoria(Long id, String justificativa) {
+        Projeto projeto = findById(id);
+        // Transição para NAO_ACEITO
+        projeto.setStatusProjeto(StatusProjeto.NAO_ACEITO);
+        projeto.setJustificativaRecusa(justificativa);
+        return projetoRepository.save(projeto);
+    }
 }

@@ -1,6 +1,6 @@
 package com.br.SAM_FullStack.SAM_FullStack.autenticacao;
 
-import com.br.SAM_FullStack.SAM_FullStack.dto.LoginDTO;
+import com.br.SAM_FullStack.SAM_FullStack.dto.TokenDTO;
 import com.br.SAM_FullStack.SAM_FullStack.dto.RespostaLoginDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +33,7 @@ class LoginControllerTest {
     @Test
     @DisplayName("Login correto deve retornar 200 e token")
     void login_quandoCorreto_deveRetornar200() {
-        LoginDTO loginDTO = new LoginDTO(email, senha);
+        TokenDTO loginDTO = new TokenDTO(email, senha);
         RespostaLoginDTO respostaMock = new RespostaLoginDTO("token123", "ALUNO", email, null);
 
         when(authServiceMock.login(loginDTO)).thenReturn(respostaMock);
@@ -49,7 +49,7 @@ class LoginControllerTest {
     @Test
     @DisplayName("Login incorreto deve lançar exceção")
     void login_quandoFalha_deveLancarExcecao() {
-        LoginDTO loginDTO = new LoginDTO(email, "senhaErrada");
+        TokenDTO loginDTO = new TokenDTO(email, "senhaErrada");
 
         when(authServiceMock.login(loginDTO))
                 .thenThrow(new RuntimeException("Email ou senha inválidos"));

@@ -9,8 +9,9 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginDTO {
+public class TokenDTO {
 
+    /*
     private String email;
     private String senha;
     private String role;
@@ -19,4 +20,10 @@ public class LoginDTO {
         this.email = email;
         this.senha = senha;
     }
+     */
+
+    private String username;
+    private String password;
+    private String clientId;
+    private String grantType;
 }

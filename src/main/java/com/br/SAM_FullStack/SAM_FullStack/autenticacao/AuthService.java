@@ -1,6 +1,6 @@
 package com.br.SAM_FullStack.SAM_FullStack.autenticacao;
 
-import com.br.SAM_FullStack.SAM_FullStack.dto.LoginDTO;
+import com.br.SAM_FullStack.SAM_FullStack.dto.TokenDTO;
 import com.br.SAM_FullStack.SAM_FullStack.dto.RespostaLoginDTO;
 import com.br.SAM_FullStack.SAM_FullStack.model.Aluno;
 import com.br.SAM_FullStack.SAM_FullStack.model.Coordenador;
@@ -18,9 +18,9 @@ public class AuthService {
     @Autowired private TokenService tokenService;
     @Autowired private PasswordEncoder passwordEncoder;
 
-    public RespostaLoginDTO login(LoginDTO loginDTO){
-        String email = loginDTO.getEmail();
-        String senha = loginDTO.getSenha();
+    public RespostaLoginDTO login(TokenDTO loginDTO){
+        String email = "isabel@uniamerica.br";
+        String senha = "desco123";
 
         UserDetails user = userDetailsService.loadUserByUsername(email);
 

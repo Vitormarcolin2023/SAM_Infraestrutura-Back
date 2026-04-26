@@ -1,10 +1,7 @@
 package com.br.SAM_FullStack.SAM_FullStack.controller;
 
 import com.br.SAM_FullStack.SAM_FullStack.autenticacao.TokenService;
-import com.br.SAM_FullStack.SAM_FullStack.dto.LoginDTO;
-import com.br.SAM_FullStack.SAM_FullStack.dto.RespostaLoginDTO;
 import com.br.SAM_FullStack.SAM_FullStack.model.Aluno;
-import com.br.SAM_FullStack.SAM_FullStack.model.Mentor;
 import com.br.SAM_FullStack.SAM_FullStack.service.AlunoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

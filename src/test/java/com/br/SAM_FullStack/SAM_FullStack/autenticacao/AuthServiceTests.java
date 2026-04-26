@@ -1,6 +1,6 @@
 package com.br.SAM_FullStack.SAM_FullStack.autenticacao;
 
-import com.br.SAM_FullStack.SAM_FullStack.dto.LoginDTO;
+import com.br.SAM_FullStack.SAM_FullStack.dto.TokenDTO;
 import com.br.SAM_FullStack.SAM_FullStack.dto.RespostaLoginDTO;
 import com.br.SAM_FullStack.SAM_FullStack.model.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,7 +66,7 @@ class AuthServiceTest {
         when(userDetailsServiceMock.loadUserByUsername(email)).thenReturn(aluno);
         when(passwordEncoderMock.matches(senha, aluno.getPassword())).thenReturn(true);
 
-        RespostaLoginDTO resposta = authService.login(new LoginDTO(email, senha));
+        RespostaLoginDTO resposta = authService.login(new TokenDTO(email, senha));
 
         assertEquals("ALUNO", resposta.getRole());
         assertEquals(email, resposta.getEmail());
@@ -88,7 +88,7 @@ class AuthServiceTest {
         when(userDetailsServiceMock.loadUserByUsername(email)).thenReturn(mentor);
         when(passwordEncoderMock.matches(senha, mentor.getPassword())).thenReturn(true);
 
-        RespostaLoginDTO resposta = authService.login(new LoginDTO(email, senha));
+        RespostaLoginDTO resposta = authService.login(new TokenDTO(email, senha));
 
         assertEquals("MENTOR", resposta.getRole());
         assertEquals("ATIVO", resposta.getStatus());
@@ -108,7 +108,7 @@ class AuthServiceTest {
         when(userDetailsServiceMock.loadUserByUsername(email)).thenReturn(professor);
         when(passwordEncoderMock.matches(senha, professor.getPassword())).thenReturn(true);
 
-        RespostaLoginDTO resposta = authService.login(new LoginDTO(email, senha));
+        RespostaLoginDTO resposta = authService.login(new TokenDTO(email, senha));
 
         assertEquals("PROFESSOR", resposta.getRole());
         assertEquals(email, resposta.getEmail());
@@ -129,7 +129,7 @@ class AuthServiceTest {
         when(userDetailsServiceMock.loadUserByUsername(email)).thenReturn(coordenador);
         when(passwordEncoderMock.matches(senha, coordenador.getPassword())).thenReturn(true);
 
-        RespostaLoginDTO resposta = authService.login(new LoginDTO(email, senha));
+        RespostaLoginDTO resposta = authService.login(new TokenDTO(email, senha));
 
         assertEquals("COORDENADOR", resposta.getRole());
         assertEquals(email, resposta.getEmail());
@@ -151,7 +151,7 @@ class AuthServiceTest {
         when(passwordEncoderMock.matches(senha, aluno.getPassword())).thenReturn(false);
 
         RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> authService.login(new LoginDTO(email, senha)));
+                () -> authService.login(new TokenDTO(email, senha)));
 
         assertEquals("Email ou senha inválidos", exception.getMessage());
     }
@@ -169,7 +169,7 @@ class AuthServiceTest {
         when(passwordEncoderMock.matches(senha, user.getPassword())).thenReturn(true);
 
         RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> authService.login(new LoginDTO(email, senha)));
+                () -> authService.login(new TokenDTO(email, senha)));
 
         assertEquals("Usuário não detectado", exception.getMessage());
     }

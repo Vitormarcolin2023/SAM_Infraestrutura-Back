@@ -20,17 +20,10 @@
 	import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 	import com.br.SAM_FullStack.SAM_FullStack.autenticacao.CustomUserDetailsService;
-	import com.br.SAM_FullStack.SAM_FullStack.config.JwtAuthenticationFilter;
 
 	@Configuration
 	@EnableMethodSecurity
 	public class SecurityConfig {
-
-		@Autowired
-		private JwtAuthenticationFilter jwtAuthFilter;
-
-		@Autowired
-		private CustomUserDetailsService userDetailsService;
 
 		@Bean
 		public PasswordEncoder passwordEncoder() {
@@ -38,27 +31,15 @@
 		}
 
 		@Bean
-		public DaoAuthenticationProvider authenticationProvider() {
-			DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-			authProvider.setUserDetailsService(userDetailsService);
-			authProvider.setPasswordEncoder(passwordEncoder());
-			return authProvider;
-		}
-
-
-		@Bean
-		public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-			return http.getSharedObject(AuthenticationManager.class);
-		}
-
-		@Bean
 		public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 			http
 					.csrf(csrf -> csrf.disable())
+					.oauth2ResourceServer(oauth2 -> oauth2
+							.jwt(jwt -> jwt.jwtAuthenticationConverter(new JWTConverter())))
 					.cors(cors -> {})
 					.authorizeHttpRequests(auth -> auth
 							// rotas livres
-							.requestMatchers("/auth/login/**").permitAll()
+							.requestMatchers("/token/**").permitAll()
 							.requestMatchers("/areas/findAll").permitAll()
 							.requestMatchers("/mentores/save").permitAll()
 							.requestMatchers("/alunos/save").permitAll()
@@ -90,8 +71,6 @@
 
 							.anyRequest().authenticated()
 					)
-					.authenticationProvider(authenticationProvider())
-					.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 					.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
 			return http.build();

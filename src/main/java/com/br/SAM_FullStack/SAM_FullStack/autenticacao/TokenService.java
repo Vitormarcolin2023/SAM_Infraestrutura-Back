@@ -15,11 +15,6 @@ import java.time.ZoneOffset;
 @Service
 public class TokenService {
 
-    /**
-     * ATENÇÃO: A chave secreta (secret) é injetada aqui.
-     * Ela será lida da propriedade 'app.security.jwt.secret' definida no application.properties,
-     * que por sua vez, está lendo a variável de ambiente ${JWT_SECRET} do seu arquivo .env
-     */
     @Value("${app.security.jwt.secret}")
     private String secret;
 

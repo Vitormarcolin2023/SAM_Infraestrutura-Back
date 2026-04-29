@@ -7,10 +7,11 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class RespostaLoginDTO {
+@AllArgsConstructor
+public class LoginDTO {
 
-    String accessToken;
-    int expiresIn;
+    private String email;
+    private String senha;
+
 }

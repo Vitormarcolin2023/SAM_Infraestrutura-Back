@@ -13,21 +13,16 @@ public class JWTConverter implements Converter<Jwt, AbstractAuthenticationToken>
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
-        // 1. Acessa o resource_access
         Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
 
         if (resourceAccess == null) {
             return new JwtAuthenticationToken(jwt, java.util.Collections.emptyList());
         }
-
-        // 2. Acessa o seu client específico (sam_app)
         Map<String, Object> clientAccess = (Map<String, Object>) resourceAccess.get("sam_app");
 
         if (clientAccess == null || !clientAccess.containsKey("roles")) {
             return new JwtAuthenticationToken(jwt, java.util.Collections.emptyList());
         }
-
-        // 3. Extrai a lista de roles
         Collection<String> roles = (Collection<String>) clientAccess.get("roles");
 
         var grants = roles.stream()

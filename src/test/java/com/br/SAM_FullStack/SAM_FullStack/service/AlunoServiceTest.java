@@ -2,7 +2,6 @@ package com.br.SAM_FullStack.SAM_FullStack.service;
 
 import com.br.SAM_FullStack.SAM_FullStack.model.Aluno;
 import com.br.SAM_FullStack.SAM_FullStack.repository.AlunoRepository;
-import com.br.SAM_FullStack.SAM_FullStack.autenticacao.TokenService;
 import com.br.SAM_FullStack.SAM_FullStack.model.Curso;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

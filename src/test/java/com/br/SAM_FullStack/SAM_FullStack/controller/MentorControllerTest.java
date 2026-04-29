@@ -1,6 +1,5 @@
 package com.br.SAM_FullStack.SAM_FullStack.controller;
 
-import com.br.SAM_FullStack.SAM_FullStack.autenticacao.TokenService;
 import com.br.SAM_FullStack.SAM_FullStack.model.Mentor;
 import com.br.SAM_FullStack.SAM_FullStack.model.StatusMentor;
 import com.br.SAM_FullStack.SAM_FullStack.service.MentorService;
@@ -9,7 +8,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;

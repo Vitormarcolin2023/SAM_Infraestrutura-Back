@@ -1,6 +1,5 @@
 package com.br.SAM_FullStack.SAM_FullStack.controller;
 
-import com.br.SAM_FullStack.SAM_FullStack.autenticacao.TokenService;
 import com.br.SAM_FullStack.SAM_FullStack.model.*;
 import com.br.SAM_FullStack.SAM_FullStack.service.ProjetoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,7 +18,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static com.br.SAM_FullStack.SAM_FullStack.model.StatusProjeto.ARQUIVADO;

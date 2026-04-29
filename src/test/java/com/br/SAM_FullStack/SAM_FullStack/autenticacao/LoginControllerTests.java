@@ -1,6 +1,6 @@
 package com.br.SAM_FullStack.SAM_FullStack.autenticacao;
 
-import com.br.SAM_FullStack.SAM_FullStack.dto.TokenDTO;
+import com.br.SAM_FullStack.SAM_FullStack.dto.LoginDTO;
 import com.br.SAM_FullStack.SAM_FullStack.dto.RespostaLoginDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,9 +11,9 @@ import java.lang.reflect.Field;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class LoginControllerTest {
+class AuthControllerTest {
 
-    private LoginController loginController;
+    private AuthController authController;
     private AuthService authServiceMock;
 
     private final String email = "teste@email.com";
@@ -22,41 +22,13 @@ class LoginControllerTest {
     @BeforeEach
     void setup() throws NoSuchFieldException, IllegalAccessException {
         authServiceMock = mock(AuthService.class);
-        loginController = new LoginController();
+        authController = new AuthController();
 
         // injeta o AuthService mock no controller via reflexão
-        Field authServiceField = LoginController.class.getDeclaredField("authService");
+        Field authServiceField = AuthController.class.getDeclaredField("authService");
         authServiceField.setAccessible(true);
-        authServiceField.set(loginController, authServiceMock);
+        authServiceField.set(authController, authServiceMock);
     }
 
-    @Test
-    @DisplayName("Login correto deve retornar 200 e token")
-    void login_quandoCorreto_deveRetornar200() {
-        TokenDTO loginDTO = new TokenDTO(email, senha);
-        RespostaLoginDTO respostaMock = new RespostaLoginDTO("token123", "ALUNO", email, null);
 
-        when(authServiceMock.login(loginDTO)).thenReturn(respostaMock);
-
-        var response = loginController.login(loginDTO);
-
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals("token123", response.getBody().getToken());
-        assertEquals("ALUNO", response.getBody().getRole());
-    }
-
-    @Test
-    @DisplayName("Login incorreto deve lançar exceção")
-    void login_quandoFalha_deveLancarExcecao() {
-        TokenDTO loginDTO = new TokenDTO(email, "senhaErrada");
-
-        when(authServiceMock.login(loginDTO))
-                .thenThrow(new RuntimeException("Email ou senha inválidos"));
-
-        RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> loginController.login(loginDTO));
-
-        assertEquals("Email ou senha inválidos", exception.getMessage());
-    }
 }

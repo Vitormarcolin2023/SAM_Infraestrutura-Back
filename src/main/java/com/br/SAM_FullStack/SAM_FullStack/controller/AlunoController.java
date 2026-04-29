@@ -1,12 +1,13 @@
 package com.br.SAM_FullStack.SAM_FullStack.controller;
 
-import com.br.SAM_FullStack.SAM_FullStack.autenticacao.TokenService;
 import com.br.SAM_FullStack.SAM_FullStack.model.Aluno;
 import com.br.SAM_FullStack.SAM_FullStack.service.AlunoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,7 +19,6 @@ import java.util.List;
 public class AlunoController {
 
     private final AlunoService alunoService;
-    private final TokenService tokenService;
 
     @GetMapping("/findAll")
     public ResponseEntity<List<Aluno>> findAll(){
@@ -90,24 +90,20 @@ public class AlunoController {
 
     @GetMapping("/me")
     public ResponseEntity<Aluno> getAlunoProfile(
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @AuthenticationPrincipal Jwt jwt) {
 
-        String token = null;
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            token = authorizationHeader.substring(7); // remove "Bearer "
-        }
+        String email = jwt.getClaimAsString("email");
 
-        if (token == null) {
+        if (email == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        String email = tokenService.extractEmail(token);
 
         Aluno aluno = alunoService.findByEmail(email);
 
         if (aluno != null) {
             return ResponseEntity.ok(aluno);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 }

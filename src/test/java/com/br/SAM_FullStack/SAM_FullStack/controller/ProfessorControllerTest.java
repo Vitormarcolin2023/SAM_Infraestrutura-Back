@@ -1,6 +1,5 @@
 package com.br.SAM_FullStack.SAM_FullStack.controller;
 
-import com.br.SAM_FullStack.SAM_FullStack.autenticacao.TokenService;
 import com.br.SAM_FullStack.SAM_FullStack.model.Professor;
 import com.br.SAM_FullStack.SAM_FullStack.model.Curso;
 import com.br.SAM_FullStack.SAM_FullStack.model.Mentor;

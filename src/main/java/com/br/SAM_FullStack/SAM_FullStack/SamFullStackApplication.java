@@ -26,14 +26,14 @@ public class SamFullStackApplication {
                     System.setProperty(entry.getKey(), entry.getValue());
                 });
 
-                System.out.println("✅ Arquivo .env carregado com sucesso! Variáveis injetadas no ambiente.");
+                System.out.println("Arquivo .env carregado com sucesso! Variáveis injetadas no ambiente.");
 
             } catch (Exception e) {
-                System.err.println("❌ Erro ao carregar o arquivo .env: " + e.getMessage());
+                System.err.println("Erro ao carregar o arquivo .env: " + e.getMessage());
             }
 
         } else {
-            System.out.println("⚠️ Aviso: Arquivo .env não encontrado. O aplicativo usará apenas variáveis de ambiente do sistema ou defaults.");
+            System.out.println("Aviso: Arquivo .env não encontrado. O aplicativo usará apenas variáveis de ambiente do sistema ou defaults.");
         }
 
 

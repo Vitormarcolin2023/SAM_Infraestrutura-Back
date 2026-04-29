@@ -1,6 +1,5 @@
 package com.br.SAM_FullStack.SAM_FullStack.controller;
 
-import com.br.SAM_FullStack.SAM_FullStack.autenticacao.TokenService;
 import com.br.SAM_FullStack.SAM_FullStack.dto.CoordenadorDTO;
 import com.br.SAM_FullStack.SAM_FullStack.dto.CoordenadorUpdateDTO;
 import com.br.SAM_FullStack.SAM_FullStack.model.Coordenador;

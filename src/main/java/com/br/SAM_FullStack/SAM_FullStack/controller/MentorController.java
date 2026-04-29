@@ -1,12 +1,13 @@
 package com.br.SAM_FullStack.SAM_FullStack.controller;
 
-import com.br.SAM_FullStack.SAM_FullStack.autenticacao.TokenService;
 import com.br.SAM_FullStack.SAM_FullStack.model.Mentor;
 import com.br.SAM_FullStack.SAM_FullStack.service.MentorService;
 import com.br.SAM_FullStack.SAM_FullStack.service.ProjetoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,8 +17,6 @@ import java.util.List;
 @CrossOrigin("*")
 public class MentorController {
 
-    @Autowired
-    TokenService tokenService;
     private final MentorService mentorService;
     @Autowired
     private ProjetoService projetoService;
@@ -76,25 +75,21 @@ public class MentorController {
 
     @GetMapping("/me")
     public ResponseEntity<Mentor> getMentorProfile(
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @AuthenticationPrincipal Jwt jwt) {
 
-        String token = null;
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            token = authorizationHeader.substring(7); // remove "Bearer "
-        }
+        String email = jwt.getClaimAsString("email");
 
-        if (token == null) {
+        if (email == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        String email = tokenService.extractEmail(token);
 
-        Mentor mentor = mentorService.findByEmail(email);
+        Mentor mentor =mentorService.findByEmail(email);
 
         if (mentor != null) {
             return ResponseEntity.ok(mentor);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
     @GetMapping("/area/{id}")

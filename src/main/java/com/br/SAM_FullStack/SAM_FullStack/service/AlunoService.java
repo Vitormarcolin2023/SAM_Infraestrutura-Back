@@ -1,9 +1,7 @@
 package com.br.SAM_FullStack.SAM_FullStack.service;
 
-import com.br.SAM_FullStack.SAM_FullStack.config.SecurityConfig;
 import com.br.SAM_FullStack.SAM_FullStack.model.Aluno;
 import com.br.SAM_FullStack.SAM_FullStack.repository.AlunoRepository;
-import com.br.SAM_FullStack.SAM_FullStack.autenticacao.TokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +23,6 @@ public class AlunoService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private TokenService tokenService;
 
     public Aluno findById(Long id) {
         return alunoRepository.findById(id).orElseThrow(() ->
@@ -71,24 +67,20 @@ public class AlunoService {
     }
 
     public Aluno update(Long id, Aluno alunoUpdate){
-        // 1. Busca o aluno que você quer atualizar
         Aluno alunoExistente = findById(id);
 
-        // 2. Verifica se o e-mail foi alterado
         if (!alunoExistente.getEmail().equals(alunoUpdate.getEmail())) {
             // 3. Se mudou, verifica se o novo e-mail já existe para OUTRO aluno
             Optional<Aluno> outroAlunoComMesmoEmail = alunoRepository.findByEmail(alunoUpdate.getEmail());
 
-            // 4. Se encontrou, lança uma exceção clara
             if (outroAlunoComMesmoEmail.isPresent()) {
                 throw new RuntimeException("O e-mail '" + alunoUpdate.getEmail() + "' já está cadastrado.");
             }
         }
 
-        // Se passou em todas as validações, atualiza os dados
         alunoExistente.setNome(alunoUpdate.getNome());
         alunoExistente.setEmail(alunoUpdate.getEmail());
-        // Não é recomendado permitir a alteração do RA, mas se precisar, mantenha a linha abaixo
+
         alunoExistente.setRa(alunoUpdate.getRa());
 
         if (alunoUpdate.getSenha() != null && !alunoUpdate.getSenha().isEmpty()) {
@@ -112,7 +104,7 @@ public class AlunoService {
     }
 
     public List<Aluno> buscarPorNome(String nome) {
-        // Apenas repassa a chamada para o método mágico do repositório
+
         return alunoRepository.findByNomeContainingIgnoreCase(nome);
     }
 

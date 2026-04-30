@@ -9,6 +9,6 @@ import java.util.Optional;
 
 public interface ProfessorRepository extends JpaRepository<Professor, Long> {
 
-    Optional<Professor> findBySenha(String senha);
     Optional<Professor> findByEmail(String email);
+    Optional<Professor> findByKeycloakId(String keycloakId);
 }

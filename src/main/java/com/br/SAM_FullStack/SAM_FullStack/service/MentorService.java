@@ -1,15 +1,23 @@
 package com.br.SAM_FullStack.SAM_FullStack.service;
 
+import com.br.SAM_FullStack.SAM_FullStack.dto.MentorDTO;
 import com.br.SAM_FullStack.SAM_FullStack.model.Mentor;
-import com.br.SAM_FullStack.SAM_FullStack.model.Projeto;
 import com.br.SAM_FullStack.SAM_FullStack.model.StatusMentor;
 import com.br.SAM_FullStack.SAM_FullStack.repository.MentorRepository;
-import com.br.SAM_FullStack.SAM_FullStack.repository.ProjetoRepository;
-import jakarta.transaction.Transactional;
+import jakarta.ws.rs.core.Response;
+import org.keycloak.OAuth2Constants;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.KeycloakBuilder;
+import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,8 +29,18 @@ public class MentorService {
 
     @Autowired
     private EmailService emailService;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+
+    @Value("${app.security.keycloak.realm}")
+    private String realmName;
+
+    @Value("${app.security.server.url}")
+    private String serverUrl;
+
+    @Value("${app.security.client.id}")
+    private String clientId;
+
+    @Value("${app.security.client.secret}")
+    private String clientSecret;
 
     public MentorService(MentorRepository mentorRepository){
         this.mentorRepository = mentorRepository;
@@ -33,55 +51,145 @@ public class MentorService {
         return mentorRepository.findAll();
     }
 
+    public Mentor findByKeycloakId(String keycloakId) {
+        return mentorRepository.findByKeycloakId(keycloakId).orElseThrow(() ->
+                new RuntimeException("Mentor não encontrado"));
+    }
+
     //buscar por id
     public Mentor findById(long id){
         return mentorRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Mentor não encontrado"));
     }
 
-    // Salvar
-    public Mentor save(Mentor mentor) {
-        mentor.setStatusMentor(StatusMentor.PENDENTE);
+    @Transactional
+    public Mentor save(MentorDTO dto) {
 
-        String senhaEncript = passwordEncoder.encode(mentor.getSenha());
-        mentor.setSenha(senhaEncript);
+        String keycloakId = criarUsuarioNoKeycloak(dto);
+
+        Mentor mentor = new Mentor();
+        mentor.setNome(dto.getNome());
+        mentor.setEmail(dto.getEmail());
+        mentor.setCpf(dto.getCpf());
+        mentor.setTipoDeVinculo(dto.getTipoDeVinculo());
+        mentor.setFormacaoDoMentor(dto.getFormacaoDoMentor());
+        mentor.setTempoDeExperiencia(dto.getTempoDeExperiencia());
+        mentor.setAreaDeAtuacao(dto.getAreaDeAtuacao());
+        mentor.setResumo(dto.getResumo());
+        mentor.setStatusMentor(StatusMentor.PENDENTE);
+        mentor.setEndereco(dto.getEndereco());
+
+        mentor.setKeycloakId(keycloakId);
+        mentor.setStatusMentor(StatusMentor.PENDENTE);
 
         Mentor mentorSalvo = mentorRepository.save(mentor);
 
         try {
-            String destinatario = mentor.getEmail();
+            String destinatario = mentorSalvo.getEmail();
             String assunto = "Bem-vindo(a) ao SAM - Cadastro em Análise";
             Map<String, Object> variaveis = Map.of("nomeMentor", mentorSalvo.getNome());
             String template = "emails/boasVindasMentor";
-
             emailService.enviarEmailComTemplate(destinatario, assunto, template, variaveis);
         } catch (Exception e) {
-            System.err.println("Erro ao enviar e-mail de boas-vindas: " + e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException("Algo deu errado " + e.getMessage());
         }
 
         return mentorSalvo;
     }
 
-    public Mentor update(Long id, Mentor mentorUpdate) {
-        Mentor mentorExistente = findById(id);
+    @Transactional
+    public Mentor update(Long id, MentorDTO dto) {
+        Mentor mentorExistente = mentorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Mentor não encontrado"));
 
-        // Atualiza campos apenas se vierem preenchidos
-        if (mentorUpdate.getNome() != null) mentorExistente.setNome(mentorUpdate.getNome());
-        if (mentorUpdate.getCpf() != null) mentorExistente.setCpf(mentorUpdate.getCpf());
-        if (mentorUpdate.getEmail() != null) mentorExistente.setEmail(mentorUpdate.getEmail());
-        if (mentorUpdate.getTipoDeVinculo() != null) mentorExistente.setTipoDeVinculo(mentorUpdate.getTipoDeVinculo());
-        if (mentorUpdate.getFormacaoDoMentor() != null) mentorExistente.setFormacaoDoMentor(mentorUpdate.getFormacaoDoMentor());
-        if (mentorUpdate.getTempoDeExperiencia() != null) mentorExistente.setTempoDeExperiencia(mentorUpdate.getTempoDeExperiencia());
-        if (mentorUpdate.getAreaDeAtuacao() != null) mentorExistente.setAreaDeAtuacao(mentorUpdate.getAreaDeAtuacao());
-        if (mentorUpdate.getEndereco() != null) mentorExistente.setEndereco(mentorUpdate.getEndereco());
-        if (mentorUpdate.getResumo() != null) mentorExistente.setResumo(mentorUpdate.getResumo());
+        boolean emailMudou = !mentorExistente.getEmail().equalsIgnoreCase(dto.getEmail());
+        atualizarUsuarioNoKeycloak(mentorExistente.getKeycloakId(), dto, emailMudou);
+
+        // Atualizar campos locais
+        mentorExistente.setNome(dto.getNome());
+        mentorExistente.setEmail(dto.getEmail());
+        mentorExistente.setCpf(dto.getCpf());
+        mentorExistente.setTipoDeVinculo(dto.getTipoDeVinculo());
+        mentorExistente.setFormacaoDoMentor(dto.getFormacaoDoMentor());
+        mentorExistente.setTempoDeExperiencia(dto.getTempoDeExperiencia());
+        mentorExistente.setAreaDeAtuacao(dto.getAreaDeAtuacao());
+        mentorExistente.setResumo(dto.getResumo());
 
         return mentorRepository.save(mentorExistente);
     }
 
+    private String criarUsuarioNoKeycloak(MentorDTO dto) {
+        Keycloak keycloak = KeycloakBuilder.builder()
+                .serverUrl(serverUrl)
+                .realm(realmName)
+                .clientId(clientId)
+                .clientSecret(clientSecret)
+                .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                .build();
 
-    //deletar
+        UserRepresentation user = new UserRepresentation();
+        user.setEnabled(true);
+        user.setUsername(dto.getEmail());
+        user.setEmail(dto.getEmail());
+        user.setFirstName(dto.getNome());
+        user.setEmailVerified(true);
+        user.setRequiredActions(new ArrayList<>());
+
+        CredentialRepresentation cred = new CredentialRepresentation();
+        cred.setTemporary(false);
+        cred.setType(CredentialRepresentation.PASSWORD);
+        cred.setValue(dto.getSenha());
+        user.setCredentials(List.of(cred));
+
+        Response response = keycloak.realm(realmName).users().create(user);
+
+        if (response.getStatus() == 201) {
+            String path = response.getLocation().getPath();
+            String userId = path.substring(path.lastIndexOf("/") + 1);
+
+            atribuirClientRole(keycloak, realmName, userId, "MENTOR");
+
+            return userId;
+        } else {
+            throw new RuntimeException("Erro ao criar mentor no Keycloak: " + response.getStatus());
+        }
+    }
+
+    private void atribuirClientRole(Keycloak keycloak, String realm, String userId, String roleName) {
+        String clientName = clientId;
+
+        String clientUuid = keycloak.realm(realm).clients()
+                .findByClientId(clientName).get(0).getId();
+
+        RoleRepresentation clientRole = keycloak.realm(realm).clients().get(clientUuid)
+                .roles().get(roleName).toRepresentation();
+
+        keycloak.realm(realm).users().get(userId).roles()
+                .clientLevel(clientUuid).add(List.of(clientRole));
+
+    }
+
+    private void atualizarUsuarioNoKeycloak(String keycloakId, MentorDTO dto, boolean emailMudou) {
+        Keycloak keycloak = KeycloakBuilder.builder()
+                .serverUrl(serverUrl)
+                .realm(realmName)
+                .clientId(clientId)
+                .clientSecret(clientSecret)
+                .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                .build();
+
+        UserResource userResource = keycloak.realm(realmName).users().get(keycloakId);
+        UserRepresentation user = userResource.toRepresentation();
+
+        user.setFirstName(dto.getNome());
+        if (emailMudou) {
+            user.setEmail(dto.getEmail());
+            user.setUsername(dto.getEmail());
+        }
+
+        userResource.update(user);
+    }
+
     public void delete(Long id){
         Mentor mentor = findById(id);
         mentorRepository.delete(mentor);

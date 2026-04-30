@@ -1,5 +1,6 @@
 package com.br.SAM_FullStack.SAM_FullStack.controller;
 
+import com.br.SAM_FullStack.SAM_FullStack.dto.AlunoDTO;
 import com.br.SAM_FullStack.SAM_FullStack.model.Aluno;
 import com.br.SAM_FullStack.SAM_FullStack.service.AlunoService;
 import jakarta.validation.Valid;
@@ -33,14 +34,14 @@ public class AlunoController {
     }
 
     @PostMapping("/save")
-    public ResponseEntity<String> save(@Valid @RequestBody Aluno aluno) {
+    public ResponseEntity<String> save(@Valid @RequestBody AlunoDTO aluno) {
         Aluno result = alunoService.save(aluno);
         return ResponseEntity.status(HttpStatus.CREATED).body("Aluno cadastrado com sucesso!");
     }
 
     //atualizar
     @PutMapping("/update/{id}")
-    public ResponseEntity<Aluno> update (@PathVariable Long id, @Valid @RequestBody Aluno alunoUpdate){
+    public ResponseEntity<Aluno> update (@PathVariable Long id, @Valid @RequestBody AlunoDTO alunoUpdate){
         Aluno alunoAtualizado = alunoService.update(id, alunoUpdate);
         return ResponseEntity.ok(alunoAtualizado);
     }
@@ -52,11 +53,6 @@ public class AlunoController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/batch")
-    public ResponseEntity<List<Aluno>> saveAll(@RequestBody List<Aluno> alunos) {
-        List<Aluno> alunosSalvos = alunoService.saveAll(alunos);
-        return ResponseEntity.status(HttpStatus.CREATED).body(alunosSalvos);
-    }
 
     //buscar-por-nome?nome=silva
     @GetMapping("/buscar-por-nome")
@@ -92,18 +88,10 @@ public class AlunoController {
     public ResponseEntity<Aluno> getAlunoProfile(
             @AuthenticationPrincipal Jwt jwt) {
 
-        String email = jwt.getClaimAsString("email");
+        String keycloak_id = jwt.getSubject();
 
-        if (email == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        Aluno aluno = alunoService.findByKeycloakId(keycloak_id);
 
-        Aluno aluno = alunoService.findByEmail(email);
-
-        if (aluno != null) {
-            return ResponseEntity.ok(aluno);
-        }
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        return ResponseEntity.ok(aluno);
     }
 }

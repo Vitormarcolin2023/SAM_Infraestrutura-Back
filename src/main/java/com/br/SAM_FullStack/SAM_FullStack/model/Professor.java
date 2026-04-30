@@ -28,17 +28,19 @@ import java.util.List;
         generator = ObjectIdGenerators.PropertyGenerator.class,
         property = "id"
 )
-public class Professor implements UserDetails {
+public class Professor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String nome;
 
     @Column(unique = true)
+    @JsonIgnore
+    private String keycloakId;
+
+    @Column(unique = true)
     @Email
     private String email;
-
-    private String senha;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -57,35 +59,5 @@ public class Professor implements UserDetails {
     @JsonIgnoreProperties("professores")
     @JsonIgnore
     private List<Grupo> grupos = new ArrayList<>();
-
-    public Professor(Long id, String nome, String email, String senha, List<Curso> cursos) {
-        this.id = id;
-        this.nome = nome;
-        this.email = email;
-        this.senha = senha;
-        this.cursos = cursos;
-    }
-
-    // Metodos obrigatórios do Spring Security
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_PROFESSOR"));
-        return authorities;
-    }
-
-    @JsonIgnore
-    private List<GrantedAuthority> authorities;
-
-    @Override
-    public String getPassword() {
-        return senha;
-    }
-
-    @Override
-    public String getUsername() {
-        return email;
-    }
 
 }

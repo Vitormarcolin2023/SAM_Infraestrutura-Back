@@ -1,5 +1,6 @@
 package com.br.SAM_FullStack.SAM_FullStack.controller;
 
+import com.br.SAM_FullStack.SAM_FullStack.dto.ProfessorDTO;
 import com.br.SAM_FullStack.SAM_FullStack.model.Curso;
 import com.br.SAM_FullStack.SAM_FullStack.model.Mentor;
 import com.br.SAM_FullStack.SAM_FullStack.model.Professor;
@@ -8,7 +9,9 @@ import com.br.SAM_FullStack.SAM_FullStack.service.ProfessorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,13 +26,13 @@ public class ProfessorController {
     private ProfessorService professorService;
 
     @PostMapping("/save")
-    public ResponseEntity<String> save(@RequestBody Professor professor) {
+    public ResponseEntity<String> save(@RequestBody ProfessorDTO professor) {
         String mensagem = this.professorService.save(professor);
         return new ResponseEntity<>(mensagem, HttpStatus.OK);
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<String> update(@RequestBody Professor professor, @PathVariable long id) {
+    public ResponseEntity<String> update(@RequestBody ProfessorDTO professor, @PathVariable long id) {
         String mensagem = this.professorService.update(professor, id);
         return new ResponseEntity<>(mensagem, HttpStatus.OK);
     }
@@ -76,16 +79,12 @@ public class ProfessorController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<Professor> getMyProfile() {
-        try {
-            Professor professor = professorService.getMyProfile();
-            return ResponseEntity.ok(professor);
-        } catch (UsernameNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (SecurityException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+    public ResponseEntity<Professor> getMyProfile(@AuthenticationPrincipal Jwt jwt) {
+
+        String keycloakId = jwt.getSubject();
+
+        Professor professor = professorService.findByKeycloakId(keycloakId);
+
+        return ResponseEntity.ok(professor);
     }
 }

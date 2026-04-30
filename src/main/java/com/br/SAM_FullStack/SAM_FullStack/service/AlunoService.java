@@ -1,13 +1,26 @@
 package com.br.SAM_FullStack.SAM_FullStack.service;
 
+import com.br.SAM_FullStack.SAM_FullStack.dto.AlunoDTO;
 import com.br.SAM_FullStack.SAM_FullStack.model.Aluno;
+import com.br.SAM_FullStack.SAM_FullStack.model.Curso;
 import com.br.SAM_FullStack.SAM_FullStack.repository.AlunoRepository;
+import com.br.SAM_FullStack.SAM_FullStack.repository.CursoRepository;
+import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.keycloak.OAuth2Constants;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.KeycloakBuilder;
+import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,12 +34,29 @@ public class AlunoService {
     private EmailService emailService;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private CursoRepository cursoRepository;
+
+    @Value("${app.security.keycloak.realm}")
+    private String realmName;
+
+    @Value("${app.security.server.url}")
+    private String serverUrl;
+
+    @Value("${app.security.client.id}")
+    private String clientId;
+
+    @Value("${app.security.client.secret}")
+    private String clientSecret;
 
 
     public Aluno findById(Long id) {
         return alunoRepository.findById(id).orElseThrow(() ->
                 new RuntimeException("Aluno não encontrado com ID: " + id));
+    }
+
+    public Aluno findByKeycloakId(String keycloakId) {
+        return alunoRepository.findByKeycloakId(keycloakId).orElseThrow(() ->
+                new RuntimeException("Aluno não encontrado."));
     }
 
     public Aluno findByRa(Integer ra){
@@ -38,70 +68,147 @@ public class AlunoService {
         return alunoRepository.findAll();
     }
 
-    public Aluno save(Aluno aluno) {
-        Optional<Aluno> alunoOptional = alunoRepository.findByRa(aluno.getRa());
-        if (alunoOptional.isPresent()) {
-            Aluno alunoExistente = alunoOptional.get();
-            log.error("Tentativa de cadastrar aluno com RA já existente. RA: {}, Aluno: {}", aluno.getRa(), alunoExistente);
-            emailService.enviarEmailTexto(
-                    aluno.getEmail(),
-                    "Falha no Cadastro: RA já existente",
-                    "Olá " + aluno.getNome() + ", já existe um aluno cadastrado com o RA " + aluno.getRa() + "."
-            );
-            throw new RuntimeException("Aluno com RA " + aluno.getRa() + " já está cadastrado!");
+    @Transactional
+    public Aluno save(AlunoDTO alunoDto) {
+        alunoRepository.findByRa(alunoDto.getRa()).ifPresent(a -> {
+            throw new RuntimeException("Aluno com RA " + alunoDto.getRa() + " já está cadastrado");
+        });
 
-        } else {
-            log.info("RA {} disponível. Cadastrando novo aluno: {}", aluno.getRa(), aluno.getNome());
+        String keycloakId = criarUsuarioNoKeycloak(alunoDto);
 
-            String senhaEncript = passwordEncoder.encode(aluno.getPassword());
-            aluno.setSenha(senhaEncript);
+        Aluno aluno = new Aluno();
+        aluno.setNome(alunoDto.getNome());
+        aluno.setEmail(alunoDto.getEmail());
+        aluno.setRa(alunoDto.getRa());
+        aluno.setKeycloakId(keycloakId);
 
-            Aluno alunoSalvo = alunoRepository.save(aluno);
-            emailService.enviarEmailTexto(
-                    alunoSalvo.getEmail(),
-                    "Aluno Cadastrado com Sucesso",
-                    "Olá " + alunoSalvo.getNome() + ", seu cadastro foi realizado com sucesso! RA é: " + alunoSalvo.getRa() + "Curso: " + alunoSalvo.getCurso()
-            );
-            return alunoSalvo;
+        if (alunoDto.getCursoId() != null) {
+            Curso curso = cursoRepository.findById(alunoDto.getCursoId())
+                    .orElseThrow(() -> new RuntimeException("Curso não encontrado."));
+            aluno.setCurso(curso);
         }
+
+        Aluno alunoSalvo = alunoRepository.save(aluno);
+
+        emailService.enviarEmailTexto(
+                alunoSalvo.getEmail(),
+                "Aluno Cadastrado com Sucesso",
+                "Olá " + alunoSalvo.getNome() + ", seu cadastro foi realizado com sucesso! RA: " + alunoSalvo.getRa()
+        );
+
+        return alunoSalvo;
     }
 
-    public Aluno update(Long id, Aluno alunoUpdate){
-        Aluno alunoExistente = findById(id);
 
-        if (!alunoExistente.getEmail().equals(alunoUpdate.getEmail())) {
-            // 3. Se mudou, verifica se o novo e-mail já existe para OUTRO aluno
-            Optional<Aluno> outroAlunoComMesmoEmail = alunoRepository.findByEmail(alunoUpdate.getEmail());
+    @Transactional
+    public Aluno update(Long id, AlunoDTO dto) {
+        Aluno alunoExistente = alunoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
 
-            if (outroAlunoComMesmoEmail.isPresent()) {
-                throw new RuntimeException("O e-mail '" + alunoUpdate.getEmail() + "' já está cadastrado.");
-            }
+        if (!alunoExistente.getEmail().equalsIgnoreCase(dto.getEmail())) {
+            alunoRepository.findByEmail(dto.getEmail()).ifPresent(a -> {
+                throw new RuntimeException("O e-mail '" + dto.getEmail() + "' já está em uso.");
+            });
         }
 
-        alunoExistente.setNome(alunoUpdate.getNome());
-        alunoExistente.setEmail(alunoUpdate.getEmail());
+        boolean emailMudou = !alunoExistente.getEmail().equalsIgnoreCase(dto.getEmail());
+        atualizarUsuarioNoKeycloak(alunoExistente.getKeycloakId(), dto, emailMudou);
 
-        alunoExistente.setRa(alunoUpdate.getRa());
+        alunoExistente.setNome(dto.getNome());
+        alunoExistente.setEmail(dto.getEmail());
+        alunoExistente.setRa(dto.getRa());
 
-        if (alunoUpdate.getSenha() != null && !alunoUpdate.getSenha().isEmpty()) {
-            String senhaEncript = passwordEncoder.encode(alunoUpdate.getSenha());
-            alunoExistente.setSenha(senhaEncript);
+        if (dto.getCursoId() != null) {
+            Curso curso = cursoRepository.findById(dto.getCursoId())
+                    .orElseThrow(() -> new RuntimeException("Curso não encontrado"));
+            alunoExistente.setCurso(curso);
         }
 
         return alunoRepository.save(alunoExistente);
     }
+
+    private String criarUsuarioNoKeycloak(AlunoDTO aluno) {
+        Keycloak keycloak = KeycloakBuilder.builder()
+                .serverUrl(serverUrl)
+                .realm(realmName)
+                .clientId(clientId)
+                .clientSecret(clientSecret)
+                .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                .build();
+
+        UserRepresentation user = new UserRepresentation();
+        user.setEnabled(true);
+        user.setUsername(aluno.getEmail());
+        user.setEmail(aluno.getEmail());
+        user.setFirstName(aluno.getNome());
+        user.setEmailVerified(true);
+        user.setRequiredActions(new ArrayList<>());
+
+        CredentialRepresentation cred = new CredentialRepresentation();
+        cred.setTemporary(false);
+        cred.setType(CredentialRepresentation.PASSWORD);
+        cred.setValue(aluno.getSenha());
+        user.setCredentials(List.of(cred));
+
+        Response response = keycloak.realm(realmName).users().create(user);
+
+        if (response.getStatus() == 201) {
+            String path = response.getLocation().getPath();
+            String userId = path.substring(path.lastIndexOf("/") + 1);
+
+            atribuirClientRole(keycloak, realmName, userId, "ALUNO");
+
+            return userId;
+        } else {
+            throw new RuntimeException("Erro ao criar usuário no Keycloak. Status: " + response.getStatus());
+        }
+    }
+
+    private void atribuirClientRole(Keycloak keycloak, String realm, String userId, String roleName) {
+        String clientName = clientId;
+
+        String clientUuid = keycloak.realm(realm).clients()
+                .findByClientId(clientName).get(0).getId();
+
+        RoleRepresentation clientRole = keycloak.realm(realm).clients().get(clientUuid)
+                .roles().get(roleName).toRepresentation();
+
+        keycloak.realm(realm).users().get(userId).roles()
+                .clientLevel(clientUuid).add(List.of(clientRole));
+
+    }
+
+    private void atualizarUsuarioNoKeycloak(String keycloakId, AlunoDTO dto, boolean emailMudou) {
+        Keycloak keycloak = KeycloakBuilder.builder()
+                .serverUrl(serverUrl)
+                .realm(realmName)
+                .clientId(clientId)
+                .clientSecret(clientSecret)
+                .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                .build();
+
+        try {
+            UserResource userResource = keycloak.realm(realmName).users().get(keycloakId);
+            UserRepresentation user = userResource.toRepresentation();
+
+            user.setFirstName(dto.getNome());
+            if (emailMudou) {
+                user.setEmail(dto.getEmail());
+                user.setUsername(dto.getEmail());
+            }
+
+            userResource.update(user);
+        } catch (Exception e) {
+            throw new RuntimeException("Falha ao atualizar dados no servidor de autenticação.");
+        }
+    }
+
 
     public void delete(Long id){
         Aluno aluno = findById(id);
         alunoRepository.delete(aluno);
     }
 
-    public List<Aluno> saveAll(List<Aluno> alunos) {
-        for (Aluno aluno : alunos) {
-            this.save(aluno);
-        }
-        return alunos;
-    }
 
     public List<Aluno> buscarPorNome(String nome) {
 

@@ -43,4 +43,6 @@ public interface AlunoRepository extends JpaRepository<Aluno, Long> {
 
     List<Aluno> findByCursoId(Long id);
 
+    Optional<Aluno> findByKeycloakId(String keycloakId);
+
 }

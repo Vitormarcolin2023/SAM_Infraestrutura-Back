@@ -22,23 +22,24 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 @Table(name = "tb_coordenacao")
-public class Coordenador implements UserDetails {
+public class Coordenador {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(unique = true)
+    @JsonIgnore
+    private String keycloakId;
+
     private String nome;
 
     @Column(unique = true, nullable = false)
     @Email
     private String email;
 
-    private String senha;
-
     @OneToMany(mappedBy = "coordenador", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("coordenador")
     private List<Curso> cursos;
-
-
 
     public void addCurso(Curso curso) {
         if (cursos == null) {
@@ -52,27 +53,4 @@ public class Coordenador implements UserDetails {
         cursos.remove(curso);
         curso.setCoordenador(null);
     }
-
-
-    // Metodos obrigatórios do Spring Security
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_COORDENADOR"));
-        return authorities;
-    }
-
-    @Override
-    public String getPassword() {
-        return senha;
-    }
-
-    @Override
-    public String getUsername() {
-        return email;
-    }
-
-    @JsonIgnore
-    private List<GrantedAuthority> authorities;
 }

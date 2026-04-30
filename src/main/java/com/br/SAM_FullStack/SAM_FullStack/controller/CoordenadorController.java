@@ -89,18 +89,10 @@ public class CoordenadorController {
     public ResponseEntity<Coordenador> getCoordenadorProfile(
             @AuthenticationPrincipal Jwt jwt) {
 
-        String email = jwt.getClaimAsString("email");
+        String keycloakId = jwt.getSubject();
 
-        if (email == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        Coordenador coordenador = coordenadorService.findByKeycloakId(keycloakId);
 
-        Coordenador coordenador = coordenadorService.buscarPorEmail(email);
-
-        if (coordenador != null) {
-            return ResponseEntity.ok(coordenador);
-        }
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        return ResponseEntity.ok(coordenador);
     }
 }

@@ -1,5 +1,6 @@
 package com.br.SAM_FullStack.SAM_FullStack.controller;
 
+import com.br.SAM_FullStack.SAM_FullStack.dto.MentorDTO;
 import com.br.SAM_FullStack.SAM_FullStack.model.Mentor;
 import com.br.SAM_FullStack.SAM_FullStack.service.MentorService;
 import com.br.SAM_FullStack.SAM_FullStack.service.ProjetoService;
@@ -41,7 +42,7 @@ public class MentorController {
 
     //salvar
     @PostMapping("/save")
-    public ResponseEntity<String> save(@RequestBody Mentor mentor) {
+    public ResponseEntity<String> save(@RequestBody MentorDTO mentor) {
         Mentor savedMentor = mentorService.save(mentor);
         // Retorna o mentor salvo se a operação for bem-sucedida.
         return ResponseEntity.status(HttpStatus.CREATED).body("Mentor cadastrado com sucesso!");
@@ -50,7 +51,7 @@ public class MentorController {
 
     //update
     @PutMapping("/update/{id}")
-    public ResponseEntity<Mentor> update(@PathVariable Long id, @RequestBody Mentor mentor) {
+    public ResponseEntity<Mentor> update(@PathVariable Long id, @RequestBody MentorDTO mentor) {
         // Tenta realizar a atualização do mentor
         Mentor mentorAtualizado = mentorService.update(id, mentor);
         // Se a atualização for bem-sucedida, retorna o mentor com status 200 OK
@@ -77,19 +78,11 @@ public class MentorController {
     public ResponseEntity<Mentor> getMentorProfile(
             @AuthenticationPrincipal Jwt jwt) {
 
-        String email = jwt.getClaimAsString("email");
+        String keycloakId = jwt.getSubject();
 
-        if (email == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        Mentor mentor =mentorService.findByKeycloakId(keycloakId);
 
-        Mentor mentor =mentorService.findByEmail(email);
-
-        if (mentor != null) {
-            return ResponseEntity.ok(mentor);
-        }
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        return ResponseEntity.ok(mentor);
     }
 
     @GetMapping("/area/{id}")

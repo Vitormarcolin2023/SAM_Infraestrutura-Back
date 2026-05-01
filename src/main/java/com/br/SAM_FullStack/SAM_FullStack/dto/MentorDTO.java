@@ -17,10 +17,10 @@ public class MentorDTO {
     private String email;
     private String senha;
     private String cpf;
+    private String telefone;
     private TipoDeVinculo tipoDeVinculo;
     private String formacaoDoMentor;
     private String tempoDeExperiencia;
     private AreaDeAtuacao areaDeAtuacao;
-    private String resumo;
     private Endereco endereco;
 }

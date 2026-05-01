@@ -9,6 +9,7 @@ import com.br.SAM_FullStack.SAM_FullStack.repository.CursoRepository;
 import com.br.SAM_FullStack.SAM_FullStack.repository.ProfessorRepository;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+@Slf4j
 @Service
 public class ProfessorService {
     @Autowired
@@ -177,9 +179,37 @@ public class ProfessorService {
     }
 
 
-    public String delete(long id){
-        this.professorRepository.deleteById(id);
-        return "Professor deletado com sucesso!";
+    @Transactional
+    public String delete(long id) {
+
+        Professor professor = professorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Professor não encontrado com o ID: " + id));
+
+        if (professor.getKeycloakId() != null) {
+            deletarUsuarioNoKeycloak(professor.getKeycloakId());
+        }
+
+        this.professorRepository.delete(professor);
+
+        return "Professor e conta de acesso deletados com sucesso!";
+    }
+
+    private void deletarUsuarioNoKeycloak(String keycloakId) {
+        try {
+            Keycloak keycloak = KeycloakBuilder.builder()
+                    .serverUrl(serverUrl)
+                    .realm(realmName)
+                    .clientId(clientId)
+                    .clientSecret(clientSecret)
+                    .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                    .build();
+
+            keycloak.realm(realmName).users().get(keycloakId).remove();
+        } catch (jakarta.ws.rs.NotFoundException e) {
+            log.warn("Usuário já não existia no keycloak, prosseguindo para deletar no banco.");
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao deletar usuário.");
+        }
     }
 
     public List<Professor> findAll(){

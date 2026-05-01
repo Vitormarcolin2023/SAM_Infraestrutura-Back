@@ -3,6 +3,7 @@ package com.br.SAM_FullStack.SAM_FullStack.service;
 import com.br.SAM_FullStack.SAM_FullStack.dto.AlunoDTO;
 import com.br.SAM_FullStack.SAM_FullStack.model.Aluno;
 import com.br.SAM_FullStack.SAM_FullStack.model.Curso;
+import com.br.SAM_FullStack.SAM_FullStack.model.Professor;
 import com.br.SAM_FullStack.SAM_FullStack.repository.AlunoRepository;
 import com.br.SAM_FullStack.SAM_FullStack.repository.CursoRepository;
 import jakarta.ws.rs.core.Response;
@@ -22,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -204,9 +204,37 @@ public class AlunoService {
     }
 
 
-    public void delete(Long id){
-        Aluno aluno = findById(id);
-        alunoRepository.delete(aluno);
+    @Transactional
+    public String delete(long id) {
+
+        Aluno aluno = alunoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Aluno não encontrado com o ID: " + id));
+
+        if (aluno.getKeycloakId() != null) {
+            deletarUsuarioNoKeycloak(aluno.getKeycloakId());
+        }
+
+        this.alunoRepository.delete(aluno);
+
+        return "Aluno e conta de acesso deletados com sucesso!";
+    }
+
+    private void deletarUsuarioNoKeycloak(String keycloakId) {
+        try {
+            Keycloak keycloak = KeycloakBuilder.builder()
+                    .serverUrl(serverUrl)
+                    .realm(realmName)
+                    .clientId(clientId)
+                    .clientSecret(clientSecret)
+                    .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                    .build();
+
+            keycloak.realm(realmName).users().get(keycloakId).remove();
+        } catch (jakarta.ws.rs.NotFoundException e) {
+            log.warn("Usuário já não existia no keycloak, prosseguindo para deletar no banco.");
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao deletar usuário.");
+        }
     }
 
 

@@ -10,6 +10,7 @@ import com.br.SAM_FullStack.SAM_FullStack.repository.CoordenadorRepository;
 import com.br.SAM_FullStack.SAM_FullStack.repository.CursoRepository;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CoordenadorService {
@@ -188,15 +190,37 @@ public class CoordenadorService {
         Coordenador coordenadorExistente = coordenadorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Coordenador não encontrado com o ID: " + id));
 
+        if (coordenadorExistente.getKeycloakId() != null) {
+            deletarUsuarioNoKeycloak(coordenadorExistente.getKeycloakId());
+        }
+
         if (coordenadorExistente.getCursos() != null) {
             coordenadorExistente.getCursos().forEach(curso -> curso.setCoordenador(null));
+            cursoRepository.saveAll(coordenadorExistente.getCursos());
         }
 
         coordenadorExistente.getCursos().clear();
 
-        cursoRepository.saveAll(coordenadorExistente.getCursos());
-
         coordenadorRepository.delete(coordenadorExistente);
+    }
+
+    private void deletarUsuarioNoKeycloak(String keycloakId) {
+        try {
+            Keycloak keycloak = KeycloakBuilder.builder()
+                    .serverUrl(serverUrl)
+                    .realm(realmName)
+                    .clientId(clientId)
+                    .clientSecret(clientSecret)
+                    .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                    .build();
+
+            keycloak.realm(realmName).users().get(keycloakId).remove();
+
+        } catch (jakarta.ws.rs.NotFoundException e) {
+            log.warn("Usuário já não existia no keycloak, prosseguindo para deletar no banco.");
+        } catch (Exception e) {
+          throw new RuntimeException("Erro ao deletar usuário.");
+        }
     }
 
     public String ativarMentor(long mentorId){

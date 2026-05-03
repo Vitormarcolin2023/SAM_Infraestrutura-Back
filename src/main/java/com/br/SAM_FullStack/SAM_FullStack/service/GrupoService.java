@@ -176,8 +176,6 @@ public class GrupoService {
         Grupo grupo = grupoRepository.findById(idGrupo)
                 .orElseThrow(() -> new IllegalArgumentException("Grupo não encontrado"));
 
-        Professor professor = professorRepository.findBySenha(senhaProf)
-                .orElseThrow(() -> new IllegalArgumentException("Professor não encontrado"));
 
         Aluno aluno = alunoRepository.findById(idAluno)
                 .orElseThrow(() -> new IllegalArgumentException("Aluno não encontrado"));

@@ -2,56 +2,57 @@ package com.br.SAM_FullStack.SAM_FullStack.autenticacao;
 
 import com.br.SAM_FullStack.SAM_FullStack.dto.LoginDTO;
 import com.br.SAM_FullStack.SAM_FullStack.dto.RespostaLoginDTO;
-import com.br.SAM_FullStack.SAM_FullStack.model.Aluno;
-import com.br.SAM_FullStack.SAM_FullStack.model.Coordenador;
-import com.br.SAM_FullStack.SAM_FullStack.model.Mentor;
-import com.br.SAM_FullStack.SAM_FullStack.model.Professor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 public class AuthService {
 
-    @Autowired private CustomUserDetailsService userDetailsService;
-    @Autowired private TokenService tokenService;
-    @Autowired private PasswordEncoder passwordEncoder;
+    @Value("${app.security.token.url}")
+    private String tokenUrl;
 
-    public RespostaLoginDTO login(LoginDTO loginDTO){
-        String email = loginDTO.getEmail();
-        String senha = loginDTO.getSenha();
+    @Value("${app.security.client.secret}")
+    private String clientSecret;
 
-        UserDetails user = userDetailsService.loadUserByUsername(email);
+    @Value("${app.security.client.id}")
+    private String clientId;
 
-        // valida senha
-        if(!passwordEncoder.matches(senha, user.getPassword())){
-            throw new RuntimeException("Email ou senha inválidos");
+    public RespostaLoginDTO get_token_login(LoginDTO loginDTO) {
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            RestTemplate rt = new RestTemplate();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+            formData.add("username", loginDTO.getEmail());
+            formData.add("password", loginDTO.getSenha());
+            formData.add("client_id", clientId);
+            formData.add("client_secret", clientSecret);
+            formData.add("grant_type", "password");
+
+            HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(formData, headers);
+
+            var response = rt.postForEntity(tokenUrl, entity, String.class).getBody();
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode json = mapper.readTree(response);
+
+            String token = json.get("access_token").asText();
+            int expiration_time = json.get("expires_in").asInt();
+
+            return new RespostaLoginDTO(token, expiration_time);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao processar autenticação", e);
         }
-
-        // pega a role
-        String role = user.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
-
-        // pega o nome dinamicamente
-        String nome;
-        // ALTERADO: A variável status deve ser String e inicializada como null
-        String status = null;
-
-        if(user instanceof Aluno) {
-            nome = ((Aluno) user).getNome();
-        } else if(user instanceof Mentor) {
-            nome = ((Mentor) user).getNome();
-            status = ((Mentor) user).getStatusMentor().name();
-        } else if(user instanceof Professor) {
-            nome = ((Professor) user).getNome();
-        } else if(user instanceof Coordenador) {
-            nome = ((Coordenador) user).getNome();
-        } else {
-            throw  new RuntimeException("Usuário não detectado");
-        }
-
-        String token = tokenService.generateToken(email, role, nome);
-
-        return new RespostaLoginDTO(token, role, email, status);
     }
 }

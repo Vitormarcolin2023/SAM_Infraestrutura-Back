@@ -24,11 +24,15 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 @Table(name = "tb_mentor")
-public class Mentor implements UserDetails {
+public class Mentor {
 
-    @Id // Anotação correta do JPA
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(unique = true)
+    @JsonIgnore
+    private String keycloakId;
 
     @NotBlank(message = "O campo nome é obrigatório")
     private String nome;
@@ -40,9 +44,6 @@ public class Mentor implements UserDetails {
     @NotBlank(message = "O campo email é obrigatório")
     @Email
     private String email;
-
-    @NotBlank(message = "O campo senha é obrigatório")
-    private String senha;
 
     @NotBlank(message = "O campo telefone é obrigatório")
     private String telefone;
@@ -70,29 +71,5 @@ public class Mentor implements UserDetails {
     private Endereco endereco;
 
     private String resumo;
-
-
-    // Metodos obrigatórios do Spring Security
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_MENTOR"));
-        return authorities;
-    }
-
-    @JsonIgnore
-    private List<GrantedAuthority> authorities;
-
-
-    @Override
-    public String getPassword() {
-        return senha;
-    }
-
-    @Override
-    public String getUsername() {
-        return email;
-    }
 
 }

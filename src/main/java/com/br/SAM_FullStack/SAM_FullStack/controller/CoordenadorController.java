@@ -1,9 +1,7 @@
 package com.br.SAM_FullStack.SAM_FullStack.controller;
 
-import com.br.SAM_FullStack.SAM_FullStack.autenticacao.TokenService;
 import com.br.SAM_FullStack.SAM_FullStack.dto.CoordenadorDTO;
 import com.br.SAM_FullStack.SAM_FullStack.dto.CoordenadorUpdateDTO;
-import com.br.SAM_FullStack.SAM_FullStack.model.Aluno;
 import com.br.SAM_FullStack.SAM_FullStack.model.Coordenador;
 import com.br.SAM_FullStack.SAM_FullStack.model.Mentor;
 import com.br.SAM_FullStack.SAM_FullStack.model.Projeto;
@@ -12,10 +10,12 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @RestController
@@ -24,8 +24,6 @@ public class CoordenadorController {
 
     @Autowired
     private CoordenadorService coordenadorService;
-    @Autowired
-    private TokenService tokenService;
 
     @PostMapping("/save")
     public ResponseEntity<Coordenador> save(@Valid @RequestBody CoordenadorDTO coordenadorDTO) {
@@ -40,6 +38,7 @@ public class CoordenadorController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         coordenadorService.delete(id);
         return ResponseEntity.ok("Coordenador excluído com sucesso");
@@ -90,24 +89,12 @@ public class CoordenadorController {
 
     @GetMapping("/me")
     public ResponseEntity<Coordenador> getCoordenadorProfile(
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @AuthenticationPrincipal Jwt jwt) {
 
-        String token = null;
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            token = authorizationHeader.substring(7); // remove "Bearer "
-        }
+        String keycloakId = jwt.getSubject();
 
-        if (token == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        String email = tokenService.extractEmail(token);
+        Coordenador coordenador = coordenadorService.findByKeycloakId(keycloakId);
 
-        Coordenador coordenador = coordenadorService.buscarPorEmail(email);
-
-        if (coordenador != null) {
-            return ResponseEntity.ok(coordenador);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        return ResponseEntity.ok(coordenador);
     }
 }

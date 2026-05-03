@@ -5,12 +5,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class RespostaLoginDTO {
-
-    String accessToken;
-    int expiresIn;
+@AllArgsConstructor
+public class ProfessorDTO {
+    private String nome;
+    private String email;
+    private String senha;
+    private List<Long> cursosIds;
 }

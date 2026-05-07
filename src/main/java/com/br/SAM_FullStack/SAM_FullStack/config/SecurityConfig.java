@@ -1,7 +1,10 @@
 	package com.br.SAM_FullStack.SAM_FullStack.config;
 
 	import java.util.Arrays;
+    import java.util.Collections;
+    import java.util.List;
 
+    import org.springframework.beans.factory.annotation.Value;
 	import org.springframework.context.annotation.Bean;
 	import org.springframework.context.annotation.Configuration;
 	import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -16,6 +19,9 @@
 	@Configuration
 	@EnableMethodSecurity
 	public class SecurityConfig {
+
+		@Value("${cors.allowed.origins}")
+		private String allowedOrigins;
 
 		@Bean
 		public PasswordEncoder passwordEncoder() {
@@ -72,10 +78,11 @@
 		@Bean
 		public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
 			CorsConfiguration config = new CorsConfiguration();
-			config.setAllowedOriginPatterns(Arrays.asList("*")); // permite Angular
-			config.setAllowedMethods(Arrays.asList("GET","POST","PUT","DELETE"));
-			config.setAllowedHeaders(Arrays.asList("*"));
-			config.setAllowCredentials(true);
+
+			config.setAllowedOriginPatterns(Collections.singletonList(allowedOrigins));
+			config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+			config.setAllowedHeaders(List.of("*"));
+			config.setAllowCredentials(false);
 
 			UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 			source.registerCorsConfiguration("/**", config);

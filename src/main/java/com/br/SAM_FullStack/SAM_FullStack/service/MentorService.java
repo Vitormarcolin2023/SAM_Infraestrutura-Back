@@ -72,10 +72,18 @@ public class MentorService {
     @Transactional
     public Mentor save(MentorDTO dto) {
 
-        String keycloakId = criarUsuarioNoKeycloak(dto);
-
         try {
+
             Mentor mentor = new Mentor();
+
+            if (dto.getAreaDeAtuacao() != null && dto.getAreaDeAtuacao().getId() != null) {
+                AreaDeAtuacao area = atuacaoRepository.findById(dto.getAreaDeAtuacao().getId())
+                        .orElseThrow(() -> new RuntimeException("Área de atuação não encontrada ID: " + dto.getAreaDeAtuacao().getId()));
+                mentor.setAreaDeAtuacao(area);
+            }
+
+            String keycloakId = criarUsuarioNoKeycloak(dto);
+
             mentor.setNome(dto.getNome());
             mentor.setEmail(dto.getEmail());
             mentor.setCpf(dto.getCpf());
@@ -86,12 +94,6 @@ public class MentorService {
             mentor.setEndereco(dto.getEndereco());
             mentor.setKeycloakId(keycloakId);
             mentor.setStatusMentor(StatusMentor.PENDENTE);
-
-            if (dto.getAreaDeAtuacao() != null && dto.getAreaDeAtuacao().getId() != null) {
-                AreaDeAtuacao area = atuacaoRepository.findById(dto.getAreaDeAtuacao().getId())
-                        .orElseThrow(() -> new RuntimeException("Área de atuação não encontrada ID: " + dto.getAreaDeAtuacao().getId()));
-                mentor.setAreaDeAtuacao(area);
-            }
 
             Mentor mentorSalvo = mentorRepository.save(mentor);
 

@@ -13,6 +13,10 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+
 @Service
 public class AuthService {
 
@@ -48,6 +52,19 @@ public class AuthService {
 
             String token = json.get("access_token").asText();
             int expiration_time = json.get("expires_in").asInt();
+
+            String[] token_split = token.split("\\."); // quebra o token, para separarmos as 3 partes
+            String payload = new String(Base64.getUrlDecoder().decode(token_split[1])); // decodifica a segunda parte do token (onde fica as informações importantes)
+            JsonNode payloadJson = mapper.readTree(payload); // transforma em json
+
+            List<String> roles = new ArrayList<>();
+            payloadJson.get("sam_app").get("roles").forEach(role -> roles.add(role.asText())); // pega as roles atribuídas
+
+            String email = loginDTO.getEmail();
+
+            if (roles.contains("ALUNO")) {
+                // Validar se já existe cadastro baseado no e-mail, se não, cria um novo aluno
+            }
 
             return new RespostaLoginDTO(token, expiration_time);
 

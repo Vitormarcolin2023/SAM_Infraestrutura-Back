@@ -74,19 +74,19 @@ public class AlunoService {
             throw new RuntimeException("Aluno com RA " + alunoDto.getRa() + " já está cadastrado");
         });
 
-        String keycloakId = criarUsuarioNoKeycloak(alunoDto);
-
         Aluno aluno = new Aluno();
         aluno.setNome(alunoDto.getNome());
         aluno.setEmail(alunoDto.getEmail());
         aluno.setRa(alunoDto.getRa());
-        aluno.setKeycloakId(keycloakId);
 
         if (alunoDto.getCursoId() != null) {
             Curso curso = cursoRepository.findById(alunoDto.getCursoId())
                     .orElseThrow(() -> new RuntimeException("Curso não encontrado."));
             aluno.setCurso(curso);
         }
+
+        String keycloakId = criarUsuarioNoKeycloak(alunoDto);
+        aluno.setKeycloakId(keycloakId);
 
         Aluno alunoSalvo = alunoRepository.save(aluno);
 

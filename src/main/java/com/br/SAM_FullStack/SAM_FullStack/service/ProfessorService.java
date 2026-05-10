@@ -60,12 +60,9 @@ public class ProfessorService {
 
     @Transactional
     public String save(ProfessorDTO dto) {
-        String keycloakId = criarUsuarioNoKeycloak(dto);
-
         Professor professor = new Professor();
         professor.setNome(dto.getNome());
         professor.setEmail(dto.getEmail());
-        professor.setKeycloakId(keycloakId);
 
         if (dto.getCursosIds() != null && !dto.getCursosIds().isEmpty()) {
             for (Long cursoId : dto.getCursosIds()) {
@@ -75,6 +72,9 @@ public class ProfessorService {
                 professor.getCursos().add(cursoDoBanco);
             }
         }
+
+        String keycloakId = criarUsuarioNoKeycloak(dto);
+        professor.setKeycloakId(keycloakId);
 
         professorRepository.save(professor);
         return "Professor salvo com sucesso!";

@@ -53,13 +53,10 @@ public class CoordenadorService {
         if (coordenadorRepository.findByEmail(coordenadorDTO.getEmail()).isPresent()) {
             throw new RuntimeException("E-mail já cadastrado no sistema.");
         }
-        String keycloakId = criarUsuarioNoKeycloak(coordenadorDTO);
-
 
         Coordenador coordenador = new Coordenador();
         coordenador.setNome(coordenadorDTO.getNome());
         coordenador.setEmail(coordenadorDTO.getEmail());
-        coordenador.setKeycloakId(keycloakId);
 
         List<Curso> cursos = cursoRepository.findAllById(coordenadorDTO.getCursosIds());
         for (Curso curso : cursos) {
@@ -67,6 +64,8 @@ public class CoordenadorService {
         }
         coordenador.setCursos(cursos);
 
+        String keycloakId = criarUsuarioNoKeycloak(coordenadorDTO);
+        coordenador.setKeycloakId(keycloakId);
 
         return coordenadorRepository.save(coordenador);
     }

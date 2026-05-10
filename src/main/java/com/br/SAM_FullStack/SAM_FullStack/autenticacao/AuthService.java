@@ -2,10 +2,7 @@ package com.br.SAM_FullStack.SAM_FullStack.autenticacao;
 
 import com.br.SAM_FullStack.SAM_FullStack.dto.LoginDTO;
 import com.br.SAM_FullStack.SAM_FullStack.dto.RespostaLoginDTO;
-import com.br.SAM_FullStack.SAM_FullStack.model.Aluno;
-import com.br.SAM_FullStack.SAM_FullStack.model.Coordenador;
-import com.br.SAM_FullStack.SAM_FullStack.model.Mentor;
-import com.br.SAM_FullStack.SAM_FullStack.model.Professor;
+import com.br.SAM_FullStack.SAM_FullStack.model.*;
 import com.br.SAM_FullStack.SAM_FullStack.repository.AlunoRepository;
 import com.br.SAM_FullStack.SAM_FullStack.repository.CoordenadorRepository;
 import com.br.SAM_FullStack.SAM_FullStack.repository.MentorRepository;
@@ -128,6 +125,7 @@ public class AuthService {
                 novoMentor.setEmail(email);
                 novoMentor.setKeycloakId(keycloakId);
                 novoMentor.setNome(nome);
+                novoMentor.setStatusMentor(StatusMentor.PENDENTE);
                 return mentorRepository.save(novoMentor);
             });
         }

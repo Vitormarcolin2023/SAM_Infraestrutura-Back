@@ -14,6 +14,7 @@ import org.hibernate.event.spi.SaveOrUpdateEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -106,14 +107,23 @@ public class GrupoController {
     }
 
     @GetMapping("/por-aluno-logado")
-    public ResponseEntity<Grupo> getGrupoDoAlunoLogado(@AuthenticationPrincipal Aluno alunoLogado) {
-        if (alunoLogado == null) {
+    public ResponseEntity<Grupo> getGrupoDoAlunoLogado(@AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
             return ResponseEntity.status(401).build();
         }
-        Grupo grupo = grupoService.findByAluno(alunoLogado);
+        String keycloakId = jwt.getClaimAsString("sub");
+
+        Aluno aluno = alunoService.findByKeycloakId(keycloakId);
+
+        if (aluno == null) {
+            return ResponseEntity.status(404).build();
+        }
+
+        Grupo grupo = grupoService.findByAluno(aluno);
         if (grupo == null) {
             return ResponseEntity.notFound().build();
         }
+
         return ResponseEntity.ok(grupo);
     }
 

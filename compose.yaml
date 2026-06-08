@@ -1,0 +1,13 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      - "local.sam.com.br:192.168.1.10"
+      - "sam.db.local:192.168.1.30"
+      - "keycloak.local:192.168.1.104"
+    env_file:
+      - /opt/backend/.env
+    container_name: "SAM_API"
+    restart: "always"

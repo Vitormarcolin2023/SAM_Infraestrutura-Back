@@ -133,8 +133,8 @@ public class GrupoController {
         return ResponseEntity.ok(result);
     }
 
-        @GetMapping("/findByGruposArquivados/{id}")
-        public ResponseEntity<List<Grupo>> findByGruposArquivados(@PathVariable long id){
+    @GetMapping("/findByGruposArquivados/{id}")
+    public ResponseEntity<List<Grupo>> findByGruposArquivados(@PathVariable long id){
         List<Grupo> response = grupoService.findByGruposArquivados(id);
         return ResponseEntity.ok(response);
     }
